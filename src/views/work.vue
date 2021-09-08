@@ -247,21 +247,21 @@ export default {
   },
   methods: {
     screenData() {
-      this.filterData = this.data;
+      this.filterData = this.cacheData.map((item) => ({ ...item }));
       if (this.inputNum) {
-        this.filterData = this.data.filter(
-          (item) => item.input === parseInt(this.inputNum)
+        this.filterData = this.filterData.filter(
+          (item) => item.input == this.inputNum
         );
       }
       if (this.selectNum) {
         this.filterData = this.filterData.filter(
-          (item) => item.select === this.selectNum
+          (item) => item.select == this.selectNum
         );
       }
       if (this.multipleSelectNum[0]) {
         this.filterData = this.filterData.filter((item) =>
           this.multipleSelectNum.find(
-            (element) => element === item.multipleSelect
+            (element) => element == item.multipleSelect
           )
         );
       }
@@ -276,23 +276,21 @@ export default {
       }
       if (this.radioNum) {
         this.filterData = this.filterData.filter(
-          (item) => item.radio === this.radioNum
+          (item) => item.radio == this.radioNum
         );
       }
       if (this.checkedNum[0]) {
         this.filterData = this.filterData.filter((item) =>
-          this.checkedNum.find((element) => element === item.checkbox)
+          this.checkedNum.find((element) => element == item.checkbox)
         );
       }
-
-      return filterData;
     },
     addData() {
       this.filterData.unshift({
         key:
           Math.max.apply(
             Math,
-            this.filterData.map((item) => {
+            this.cacheData.map((item) => {
               return item.key;
             })
           ) + 1,
@@ -303,7 +301,7 @@ export default {
         radio: Math.floor(Math.random() * 11),
         checkbox: Math.floor(Math.random() * 11),
       });
-      // this.cacheData = this.filterData.map((item) => ({ ...item }));
+      this.cacheData.unshift(this.filterData[0]);
     },
     isDuringDate(targetDateStr, beginDateStr, endDateStr) {
       var targetDate = new Date(targetDateStr),
@@ -348,9 +346,8 @@ export default {
     },
     save(key) {
       const newData = [...this.filterData];
-      // this.cacheData = this.filterData.map((item) => ({ ...item }));
-      // const newCacheData = [...this.cacheData];
-      const newCacheData = [...this.filterData];
+      this.cacheData = this.filterData.map((item) => ({ ...item }));
+      const newCacheData = [...this.cacheData];
       const target = newData.filter((item) => key === item.key)[0];
       const targetCache = newCacheData.filter((item) => key === item.key)[0];
       if (target && targetCache) {
@@ -360,6 +357,7 @@ export default {
         this.cacheData = newCacheData;
       }
       this.editingKey = '';
+      this.cacheData = this.filterData.map((item) => ({ ...item }));
     },
     cancel(key) {
       const newData = [...this.filterData];
@@ -380,14 +378,9 @@ export default {
       this.$message.success('删除成功');
     },
     checkData(key) {
-      console.log(this.filterData.filter((item) => key === item.key)[0]);
       let data = this.filterData.filter((item) => key === item.key)[0];
       let input = JSON.stringify(data.input);
       let select = JSON.stringify(data.select);
-      // let multipleSelect = JSON.stringify(data.multipleSelect);
-      // let datePicker = JSON.stringify(data.datePicker);
-      // let radio = JSON.stringify(data.radio);
-      // let checkbox = JSON.stringify(data.checkbox);
       this.$message.success('input: ' + input + ' select: ' + select, 10);
     },
   },
