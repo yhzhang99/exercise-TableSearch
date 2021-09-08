@@ -7,7 +7,7 @@
         <a-col :span="2">
           <a-input
             style="width: 120px"
-            v-model="inputNum"
+            v-model="form.inputNum"
             placeholder="input"
           />
         </a-col>
@@ -15,7 +15,7 @@
         <a-col :span="2">
           <a-select
             style="width: 120px"
-            @change="selectHandleChange"
+            v-model="form.selectNum"
             placeholder="select"
           >
             <a-select-option v-for="i in 10" :key="i" :value="i">
@@ -29,7 +29,7 @@
             mode="multiple"
             style="width: 100%"
             placeholder="multipleSelect"
-            @change="multipleSelectHandleChange"
+            v-model="form.multipleSelectNum"
           >
             <a-select-option v-for="i in 10" :key="i">
               {{ i }}
@@ -116,15 +116,21 @@
               >
             </span>
             <a-popconfirm
-              v-if="data.length"
+              v-if="filterData.length"
               title="Sure to delete?"
               @confirm="() => onDelete(record.key)"
             >
               <a href="javascript:;" style="padding: 8px">Delete</a>
             </a-popconfirm>
-            <a href="javascript:;" @click="() => checkData(record.key)"
-              >check</a
+            <a @click="() => showModal(record)"> Check </a>
+            <a-modal
+              v-model="record.visible"
+              title="Info"
+              @ok="() => handleOk(record)"
             >
+              <p>input: {{ record.input }}</p>
+              <p>select: {{ record.select }}</p>
+            </a-modal>
           </div>
         </template>
       </a-table>
@@ -190,7 +196,6 @@ const columns = [
   },
 ];
 
-const data = dataSource;
 var filterData = dataSource;
 
 import {
@@ -207,6 +212,7 @@ import {
   Col,
   Row,
   message,
+  Modal,
 } from 'ant-design-vue';
 import Vue from 'vue';
 
@@ -222,66 +228,67 @@ Vue.use(Card)
   .use(Popconfirm)
   .use(Col)
   .use(Row)
-  .use(message);
+  .use(message)
+  .use(Modal);
 
 Vue.prototype.$message = message;
 
 export default {
-  name: 'Work',
+  name: 'List',
   data() {
     this.cacheData = filterData.map((item) => ({ ...item }));
     return {
-      data,
+      form: {
+        inputNum: '',
+        selectNum: '',
+        multipleSelectNum: [],
+        datePickerDate: [],
+        radioNum: '',
+        checkedNum: [],
+      },
       filterData,
-      dataSource,
       columns,
       editingKey: '',
       value: '',
-      inputNum: '',
-      selectNum: '',
-      multipleSelectNum: [],
-      datePickerDate: [],
-      radioNum: '',
-      checkedNum: [],
     };
   },
   methods: {
     screenData() {
       this.filterData = this.cacheData.map((item) => ({ ...item }));
-      if (this.inputNum) {
+      if (this.form.inputNum) {
         this.filterData = this.filterData.filter(
-          (item) => item.input == this.inputNum
+          (item) => item.input == this.form.inputNum
         );
       }
-      if (this.selectNum) {
+      if (this.form.selectNum) {
         this.filterData = this.filterData.filter(
-          (item) => item.select == this.selectNum
+          (item) => item.select == this.form.selectNum
         );
       }
-      if (this.multipleSelectNum[0]) {
+      if (this.form.multipleSelectNum[0]) {
         this.filterData = this.filterData.filter((item) =>
-          this.multipleSelectNum.find(
+          this.form.multipleSelectNum.find(
             (element) => element == item.multipleSelect
           )
         );
       }
-      if (this.datePickerDate[0]) {
+      if (this.form.datePickerDate[0]) {
         this.filterData = this.filterData.filter((item) =>
           this.isDuringDate(
             item.datePicker,
-            this.datePickerDate[0],
-            this.datePickerDate[1]
+            this.form.datePickerDate[0],
+            this.form.datePickerDate[1]
           )
         );
       }
-      if (this.radioNum) {
+      if (this.form.radioNum) {
         this.filterData = this.filterData.filter(
-          (item) => item.radio == this.radioNum
+          (item) => item.radio == this.form.radioNum
         );
       }
-      if (this.checkedNum[0]) {
+      if (this.form.checkedNum[0]) {
         this.filterData = this.filterData.filter((item) =>
-          this.checkedNum.find((element) => element == item.checkbox)
+          this.form.checkedNum.find((element) => element == item.checkbox)
         );
       }
     },
@@ -300,8 +307,9 @@ export default {
         datePicker: `2021-8-${Math.floor(Math.random() * (11 - 1) + 1)}`,
         radio: Math.floor(Math.random() * 11),
         checkbox: Math.floor(Math.random() * 11),
+        visible: false,
       });
-      this.cacheData.unshift(this.filterData[0]);
+      this.cacheData.unshift({ ...this.filterData[0] });
     },
     isDuringDate(targetDateStr, beginDateStr, endDateStr) {
       var targetDate = new Date(targetDateStr),
@@ -312,20 +320,14 @@ export default {
       }
       return false;
     },
-    selectHandleChange(value) {
-      this.selectNum = value; // num
-    },
-    multipleSelectHandleChange(value) {
-      this.multipleSelectNum = value;
-    },
     datePickerOnChange(date, dateString) {
-      this.datePickerDate = dateString;
+      this.form.datePickerDate = dateString;
     },
     radioOnChange(e) {
-      this.radioNum = e.target.value; // num
+      this.form.radioNum = e.target.value; // num
     },
     checkboxOnChange(checkedValues) {
-      this.checkedNum = checkedValues; // 数组
+      this.form.checkedNum = checkedValues; // 数组
     },
     tableHandleChange(value, key, column) {
       const newData = [...this.filterData];
@@ -346,7 +348,6 @@ export default {
     },
     save(key) {
       const newData = [...this.filterData];
-      this.cacheData = this.filterData.map((item) => ({ ...item }));
       const newCacheData = [...this.cacheData];
       const target = newData.filter((item) => key === item.key)[0];
       const targetCache = newCacheData.filter((item) => key === item.key)[0];
@@ -357,7 +358,6 @@ export default {
         this.cacheData = newCacheData;
       }
       this.editingKey = '';
-      this.cacheData = this.filterData.map((item) => ({ ...item }));
     },
     cancel(key) {
       const newData = [...this.filterData];
@@ -373,15 +373,17 @@ export default {
       }
     },
     onDelete(key) {
-      const data = [...this.filterData];
+      const data = this.filterData.map((item) => ({ ...item }));
+      const cache = this.filterData.map((item) => ({ ...item }));
       this.filterData = data.filter((item) => item.key !== key);
+      this.cacheData = cache.filter((item) => item.key !== key);
       this.$message.success('删除成功');
     },
-    checkData(key) {
-      let data = this.filterData.filter((item) => key === item.key)[0];
-      let input = JSON.stringify(data.input);
-      let select = JSON.stringify(data.select);
-      this.$message.success('input: ' + input + ' select: ' + select, 10);
+    showModal(item) {
+      item.visible = true;
+    },
+    handleOk(item) {
+      item.visible = false;
     },
   },
 };

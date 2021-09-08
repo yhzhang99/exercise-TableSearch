@@ -10,6 +10,7 @@ const getDataSource = () => {
       datePicker: `2021-8-${Math.floor(Math.random() * (11 - 1) + 1)}`,
       radio: Math.floor(Math.random() * 11),
       checkbox: Math.floor(Math.random() * 11),
+      visible: false,
     });
   }
   return list;

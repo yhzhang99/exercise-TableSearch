@@ -1,14 +1,14 @@
 import Vue from 'vue';
 import VueRouter from 'vue-router';
-import Work from '../views/work.vue';
+import List from '../views/List.vue';
 
 Vue.use(VueRouter);
 
 const routes = [
   {
     path: '/',
-    name: 'work',
-    component: Work,
+    name: 'list',
+    component: List,
   },
 ];
 
